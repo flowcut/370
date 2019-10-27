@@ -1,81 +1,230 @@
 combin beq    0      2      quit   if r == 0 return 1 
        beq    1      2      quit   if r == n return 1
-start  nor    0      2      3      r3 = ~r2
+start  sw     0      7      backD  save return address   
+       nor    0      2      3      r3 = ~r2
        lw     0      4      pos1   r4 = 1
-       add    3      4      3      r3 = ~r2 + 1 = -r2 = -r
-       add    3      1      4      r4 = r1 + r3 = n - r
-       add    3      4      3      r3 = r3 + r4 = n - 2r
+       add    3      4      7      r7 = ~r2 + 1 = -r2 = -r // ！
+       add    7      1      4      r4 = r1 + r3 = n - r    // ！
+       add    7      4      3      r3 = r7 + r4 = n - 2r   // ！ 
        lw     0      5      psorng r5 = 2^31-1
-       nor    3      5      3      r3 = (n - 2r) nor (2^31-1)
-       beq    0      3      rlarge if (r3 == 0) -> n-2r<0 -> r>n/2
+       nor    3      5      6      r6 = (n - 2r) nor (2^31-1)
+       beq    0      6      rlarge if (r6 == 0) -> n-2r<0 -> r>n/2
+       add    2      2      2      r2 = new(2r) // rsmall starts
+       sw     0      2      colmS
+       add    3      7      6      r6 = n - 3r
+       lw     0      3      two    r3 = 2
+       add    3      4      4      r4 = n - r + 2
+       sw     0      4      diagS  
+       add    3      6      6      r6 = n - 3r + 2
+       nor    5      6      6      r6 = sign(r6) // r6 == 0 -> n-3r+2<0 -> n-r+2 < 2r -> diag/colm -> flag = 1
+       sw     0      3      blFlag default flag != 0 // r6 = 0
+       beq    0      6      rsmall
+       sw     0      0      blFlag if r6 != 0 then flag = 0
        beq    0	0      rsmall
-rlarge add    0      4      2      r2 = r := n-r 
-rsmall add    2      2      2      r2 *= 2 // to help index computation
-       lw     0      3      two    r3 = 2 // acting as 2 until ans got
+rlarge lw     0      3      two    r3 = 2
+       add    2      3      2      r2 = r + 2 = new(n-r) + 2
+       sw     0      2      diagS
+       add    4      4      2      r2 = new(2r) = 2*(n-r)
+       sw     0      2      colmS
+       add    3      4      6      r6 = 2n - 3r
+       lw     0      3      neg2   r3 = -2
+       add    3      6      6      r6 = 2n - 3r - 2
+       nor    5      6      6      r6 = sign(r6) // r6 == 0 -> 2n-3r-2<0 -> 2n-2r < r+2 -> new(2r) < new(n-r+2) -> colm/diag -> flag = 0
+       sw     0      6      blFlag
+rsmall lw     0      3      two    r3 = 2 // acting as 2 until ans got
        beq    3      2      cn1
-       sw     0      7      backD  save return address   
-       lw     0      7      three  r3 = last = 3 
+       lw     0      7      three  r7 = last = 3 
        lw     0      4      four   r4 = i = 4 // start from c(4,1)
-loopSt lw     0      5      two    r5 = j = 2
-ifeven add    3      5      5      r5 = j += 2
-       beq    5      4      edeven 
+       lw     0      6      blFlag
+       beq    0      6      cFirst
+dFirst lw     0      1      diagS
+dFull  beq    1      4      dDiagE
+       lw     0      5      two    r5 = j = 2
+dFEvS  add    3      5      5      r5 = j += 2
+       beq    5      4      dFEvE 
        lw     5      6      Null   r6 = a[j-2]
        add    6      7      7      r7 = r6 + last
        sw     5      7      Null   a[j-2] = r7
        add    0      6      7      r7 = last = r6
-       beq    1      4      check1
-       beq    0      0      ifeven 
-check1 beq    2      5      return
-       beq    0      0      ifeven
-edeven add    7      7      7      r7 = last *= 2
+       beq    0      0      dFEvS
+dFEvE  add    7      7      7      r7 = last *= 2
        sw     5      7      Null   a[j-2] = r7
-       beq    1      4      check2
-       beq    0      0      next
-check2 beq    2      5      return 
-next   lw     0      5      two    r5 = j = 2
-       lw     0      6      neg1   r6 = -1
-       add    1      6      1      r1 = n -= 1 // n temporarily-1 
-       add    4      0      7      r7 = last = i //r4 = real i - 1	
-ifodd  add    3      5      5      r5 = j += 2    
-       beq    5      4      edodd
+       lw     0      5      two    r5 = j = 2
+       add    4      0      7      r7 = last = i //r4 = real i - 1    
+dFOdS  add    3      5      5      r5 = j += 2    
+       beq    5      4      dFOdE
        lw     5      6      Null   r6 = a[j-2]
        add    6      7      7      r7 = r6 + last
        sw     5      7      Null   a[j-2] = r7
        add    0      6      7      r7 = last = r6 
-       beq    1      4      check3
-       beq    0      0      ifodd 
-check3 beq    2      5      return
-       beq    0      0      ifodd
-edodd  lw     5      6      Null   r6 = a[j-2]
+       beq    0      0      dFOdS
+dFOdE  lw     5      6      Null   r6 = a[j-2]
+       add    6      7      6      r6 = r6 + last
+       sw     5      6      Null   a[j-2] = r6  
+       lw     0      7      pos1   r7 = 1
+       add    7      4      7      r7 = last = previous i + 1
+       add    4      3      4      r4 = i += 2 // next i  
+       beq    7      1      dDiagO skip the first half loop 
+       beq    0      0      dFull
+dDiagE lw     0      1      colmS
+       lw     0      5      base
+dDLoop beq    1      4      dColmL 
+       add    3      5      5      r5 += 2
+       sw     0      5      base   update base 
+dDEvS  add    3      5      5      r5 += 2
+       beq    5      4      dDEvE
+       lw     5      6      Null   r6 = a[j-2]
        add    6      7      7      r7 = r6 + last
-       sw     5      7      Null   a[j-2] = r7  
-       beq    1      4      check4
-       beq    0      0      loopEd
-check4 beq    2      5      return
-loopEd lw     0      6      pos1   r6 = 1
-       add    6      4      7      r7 = last = previous i + 1  
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6
+       beq    0      0      dDEvS 
+dDEvE  add    7      7      7      r7 = last *= 2
+       sw     5      7      Null   a[j-2] = r7
+       lw     0      5      base   r5 = j = base
+       lw     5      7      Array  r7 = last = a[base]
+       add    3      5      5      r5 += 2 // latter half loop
+       sw     0      5      base   update base 
+dDOdS  add    3      5      5      r5 = j += 2    
+       beq    5      4      dDOdE
+       lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6 
+       beq    0      0      dDOdS
+dDOdE  lw     5      6      Null   r6 = a[j-2]
+       add    6      7      6      r6 = r6 + last
+       sw     5      6      Null   a[j-2] = r6  
+       lw     0      5      base   r5 = j = base
+       lw     5      7      Array  r7 = last = a[base] 
        add    4      3      4      r4 = i += 2 // next i
-       add    1      6      1      restore n
-       beq    0      0      loopSt  
+       beq    0      0      dDLoop
+dDiagO lw     0      1      colmS
+       lw     0      5      two
+       lw     5      7      Array  r7 = last = a[base]
+       add    3      5      5      r5 += 2
+       sw     0      5      base   update base 
+       beq    0      0      dDEvS
+dColmL lw     2      6      Hell
+       sw     2      6      Null  // restore last element for even line
+dColm  add    3      5      5      r5 += 2
+       beq    5      2      return if (base == r) then ans got
+       sw     0      5      base   update base
+dCS    add    3      5      5      r5 = j += 2
+       beq    5      2      dCE 
+       lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6
+       beq    0      0      dCS
+dCE    lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       lw     0      5      base   r5 = j = base
+       lw     5      7      Array  r7 = last = a[base]  
+       beq    0      0      dColm
+cFirst add    0      7      6      // solve bug of c(n,2)
+       lw     0      1      colmS  
+cFull  beq    1      4      cColmL 
+       lw     0      5      two    r5 = j = 2
+cFEvS  add    3      5      5      r5 = j += 2
+       beq    5      4      cFEvE 
+       lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6
+       beq    0      0      cFEvS
+cFEvE  add    7      7      7      r7 = last *= 2
+       sw     5      7      Null   a[j-2] = r7
+       lw     0      5      two    r5 = j = 2
+       add    4      0      7      r7 = last = i //r4 = real i - 1	
+cFOdS  add    3      5      5      r5 = j += 2    
+       beq    5      4      cFOdE
+       lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6 
+       beq    0      0      cFOdS
+cFOdE  lw     5      6      Null   r6 = a[j-2]
+       add    6      7      6      r6 = r6 + last
+       sw     5      6      Null   a[j-2] = r6  
+       lw     0      7      pos1   r7 = 1
+       add    7      4      7      r7 = last = previous i + 1  
+       add    4      3      4      r4 = i += 2 // next i
+       beq    0      0      cFull
+cColmL lw     0      1      diagS
+       sw     5      6      Array  a[j] = r6 = a[j-2] // to make computation consistent
+cColm  beq    1      4      cDiagL
+       lw     0      5      two    r5 = j = 2
+cCS    add    3      5      5      r5 = j += 2
+       beq    5      2      cCE 
+       lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6
+       beq    0      0      cCS
+cCE    lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    4      0      7      r7 = last = i    
+       lw     0      6      pos1   r6 = 1
+       add    4      6      4      r4 = i += 1 // next i    
+       beq    0      0      cColm
+cDiagL lw     0      5      base   r5 = base //initially 0
+cDiag  add    3      5      5      r5 += 2
+       beq    5      2      return if (base == r) then ans got
+       sw     0      5      base   update base 
+cDS    add    3      5      5      r5 = j += 2
+       beq    5      2      cDE 
+       lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       add    0      6      7      r7 = last = r6
+       beq    0      0      cDS
+cDE    lw     5      6      Null   r6 = a[j-2]
+       add    6      7      7      r7 = r6 + last
+       sw     5      7      Null   a[j-2] = r7
+       lw     0      5      base   r5 = base 
+       lw     5      7      Array  r7 = last = a[base] 
+       beq    0      0      cDiag
 return lw     5      3      Null  ans = a[j-2] 
        lw     0      7      backD
        beq    0      0      end 
 cn1    add    0      1      3      r3 = ans = r1 = n
-       beq    0	0      end	
+       beq    0	0      end
 quit   lw     0      3      pos1
 end    jalr   7      4	   	
 psorng .fill  2147483647           0b01111111111111111...	
 oddchk .fill  -2                   0b111111...1110
+base   .fill  0 
+five   .fill  5
 four   .fill  4 
 three  .fill  3
 two    .fill  2
-zero   .fill  0
 pos1   .fill  1
 neg1   .fill  -1
+neg2   .fill  -2 
+zero   .fill  0
 diagS  .fill  0
 colmS  .fill  0 
+rNum2  .fill  0
+nNum   .fill  0 
+blFlag .fill  0
 Caddr  .fill  combin
 backD  .fill  0 
+Hell   .fill  0                    sorry for this 
+       .fill  0
 Null   .fill  0                    0 to complete calculation	
        .fill  0 
-Array  .fill  0                    a slot that won't be filled
+Array  .fill  0                    a slot that won't be filled'
+       .fill  0
+       .fill  0
+       .fill  0
+       .fill  0      
+       .fill  0      
+       .fill  0 
+       .fill  0 
+       .fill  0 
+       .fill  0         
+       .fill  0 
+       .fill  0           
+       .fill  0                    //debug
