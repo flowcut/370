@@ -22,16 +22,16 @@ start  sw     0      7      backD  save return address
        lw     0      4      four   r4 = i = 4 // start from c(4,1)
        beq    0      6      dFirst // negative flag
        beq    0      0      cFirst
-rlarge lw     0      3      two    r3 = 2
+rlarge add    3      4      6      r6 = 2n - 3r
+       lw     0      7      neg2   r7 = -2
+       add    7      6      6      r6 = 2n - 3r - 2
+       nor    5      6      6      r6 = sign(r6) // r6 == 0 -> 2n-3r-2<0 -> 2n-2r < r+2 -> new(2r) < new(n-r+2) -> colm/diag -> flag = 0
+       lw     0      3      two    r3 = 2
        add    2      3      2      r2 = r + 2 = new(n-r) + 2
        sw     0      2      diagS
        add    4      4      2      r2 = new(2r) = 2*(n-r)
        beq    3      2      cn1
        sw     0      2      colmS
-       add    3      4      6      r6 = 2n - 3r
-       lw     0      7      neg2   r3 = -2
-       add    7      6      6      r6 = 2n - 3r - 2
-       nor    5      6      6      r6 = sign(r6) // r6 == 0 -> 2n-3r-2<0 -> 2n-2r < r+2 -> new(2r) < new(n-r+2) -> colm/diag -> flag = 0
        lw     0      7      three  r7 = last = 3 
        lw     0      4      four   r4 = i = 4 // start from c(4,1)
        beq    0      6      cFirst
@@ -119,8 +119,9 @@ dCE    lw     5      6      Null   r6 = a[j-2]
        beq    0      0      dColm
 cFirst add    0      7      6      // solve bug of c(n,2)
        lw     0      1      colmS  
-cFull  lw     0      5      two    r5 = j = 2
-       beq    1      4      cColmL
+       lw     0      5      two    r5 = j = 2
+cFull  beq    1      4      cColmL
+       lw     0      5      two    r5 = j = 2
 cFEvS  add    3      5      5      r5 = j += 2
        beq    5      4      cFEvE 
        lw     5      6      Null   r6 = a[j-2]
@@ -185,6 +186,7 @@ return lw     5      3      Null   ans = a[j-2]
        lw     0      7      backD
        beq    0      0      end 
 cn1    add    0      1      3      r3 = ans = r1 = n
+       lw     0      7      backD
        beq    0	0      end
 quit   lw     0      3      pos1
 end    jalr   7      4	   	
