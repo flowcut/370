@@ -13,29 +13,27 @@ start  sw     0      7      backD  save return address
        sw     0      2      colmS
        add    3      7      6      r6 = n - 3r
        lw     0      3      two    r3 = 2
+       beq    3      2      cn1
        add    3      4      4      r4 = n - r + 2
        sw     0      4      diagS  
        add    3      6      6      r6 = n - 3r + 2
        nor    5      6      6      r6 = sign(r6) // r6 == 0 -> n-3r+2<0 -> n-r+2 < 2r -> diag/colm -> flag = 1
-       sw     0      3      blFlag default flag != 0 // r6 = 0
-       beq    0      6      rsmall
-       sw     0      0      blFlag if r6 != 0 then flag = 0
-       beq    0	0      rsmall
+       lw     0      7      three  r7 = last = 3 
+       lw     0      4      four   r4 = i = 4 // start from c(4,1)
+       beq    0      6      dFirst // negative flag
+       beq    0      0      cFirst
 rlarge lw     0      3      two    r3 = 2
        add    2      3      2      r2 = r + 2 = new(n-r) + 2
        sw     0      2      diagS
        add    4      4      2      r2 = new(2r) = 2*(n-r)
+       beq    3      2      cn1
        sw     0      2      colmS
        add    3      4      6      r6 = 2n - 3r
-       lw     0      3      neg2   r3 = -2
-       add    3      6      6      r6 = 2n - 3r - 2
+       lw     0      7      neg2   r3 = -2
+       add    7      6      6      r6 = 2n - 3r - 2
        nor    5      6      6      r6 = sign(r6) // r6 == 0 -> 2n-3r-2<0 -> 2n-2r < r+2 -> new(2r) < new(n-r+2) -> colm/diag -> flag = 0
-       sw     0      6      blFlag
-rsmall lw     0      3      two    r3 = 2 // acting as 2 until ans got
-       beq    3      2      cn1
        lw     0      7      three  r7 = last = 3 
        lw     0      4      four   r4 = i = 4 // start from c(4,1)
-       lw     0      6      blFlag
        beq    0      6      cFirst
 dFirst lw     0      1      diagS
 dFull  beq    1      4      dDiagE
@@ -98,12 +96,9 @@ dDOdE  lw     5      6      Null   r6 = a[j-2]
        lw     5      7      Array  r7 = last = a[base] 
        add    4      3      4      r4 = i += 2 // next i
        beq    0      0      dDLoop
-dDiagO lw     0      1      colmS
-       lw     0      5      two
-       lw     5      7      Array  r7 = last = a[base]
-       add    3      5      5      r5 += 2
-       sw     0      5      base   update base 
-       beq    0      0      dDEvS
+dDiagO lw     3      7      Array  r7 = last = a[base]
+       sw     0      3      base   update base 
+       beq    0      0      dDiagE
 dColmL lw     2      6      Hell
        sw     2      6      Null  // restore last element for even line
 dColm  add    3      5      5      r5 += 2
@@ -124,8 +119,8 @@ dCE    lw     5      6      Null   r6 = a[j-2]
        beq    0      0      dColm
 cFirst add    0      7      6      // solve bug of c(n,2)
        lw     0      1      colmS  
-cFull  beq    1      4      cColmL 
-       lw     0      5      two    r5 = j = 2
+cFull  lw     0      5      two    r5 = j = 2
+       beq    1      4      cColmL
 cFEvS  add    3      5      5      r5 = j += 2
        beq    5      4      cFEvE 
        lw     5      6      Null   r6 = a[j-2]
@@ -186,7 +181,7 @@ cDE    lw     5      6      Null   r6 = a[j-2]
        lw     0      5      base   r5 = base 
        lw     5      7      Array  r7 = last = a[base] 
        beq    0      0      cDiag
-return lw     5      3      Null  ans = a[j-2] 
+return lw     5      3      Null   ans = a[j-2] 
        lw     0      7      backD
        beq    0      0      end 
 cn1    add    0      1      3      r3 = ans = r1 = n
